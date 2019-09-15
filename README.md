@@ -1,7 +1,7 @@
 Creating Applications with Azure Functions
 ==========================================
 
-This repository contains the sample code that goes along with a [blog post](https://mikaberglund.com/2019/09/15/create-rest-apis-with-azure-functions/) I wrote on my blog.
+This repository contains the sample code that goes along with a [blog post](https://mikaberglund.com/2019/09/15/building-applications-with-azure-functions/) I wrote on my blog.
 
 To run this sample code locally, you need to check also the documentation for the [local.settins.json](SampleFunctionApplication/local.settings.json.md) configuration file.
 
