@@ -1,9 +1,9 @@
-﻿using Microsoft.Azure.Storage;
-using Microsoft.Azure.Storage.Blob;
+﻿using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.WindowsAzure.Storage.Blob;
 using SampleFunctionApplication;
 using SampleFunctionApplication.Configuration;
 using System;
@@ -23,11 +23,10 @@ namespace SampleFunctionApplication
             var rootConfig = config.Get<RootConfigSection>();
             builder.Services.AddSingleton(rootConfig);
 
-            var account = CloudStorageAccount.Parse(rootConfig.AzureWebJobsStorage);
-            builder.Services.AddSingleton(account);
-
-            var blobClient = account.CreateCloudBlobClient();
+            var blobService = new BlobServiceClient(rootConfig.AzureWebJobsStorage);
+            var blobClient = blobService.GetBlobContainerClient(rootConfig.WebHookTempContainer);
             builder.Services.AddSingleton(blobClient);
         }
+
     }
 }

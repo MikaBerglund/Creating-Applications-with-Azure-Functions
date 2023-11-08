@@ -1,10 +1,11 @@
-﻿using Microsoft.Azure.Storage.Blob;
+﻿using Azure.Storage.Blobs;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using SampleFunctionApplication.Configuration;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -14,18 +15,18 @@ namespace SampleFunctionApplication
 {
     public class WebhookFunctions
     {
-        public WebhookFunctions(RootConfigSection rootConfig, CloudBlobClient blobClient)
+        public WebhookFunctions(RootConfigSection rootConfig, BlobContainerClient blobClient)
         {
             this.RootConfig = rootConfig;
             this.BlobClient = blobClient;
         }
 
         private readonly RootConfigSection RootConfig;
-        private readonly CloudBlobClient BlobClient;
+        private readonly BlobContainerClient BlobClient;
 
 
-        [FunctionName(Names.GenericWebhookCallbackHttp)]
-        public async Task<HttpResponseMessage> GenericWebhookCallbackHttpAsync([HttpTrigger(authLevel: AuthorizationLevel.Function, "GET", "POST", "PUT")]HttpRequestMessage request, ILogger logger)
+        [FunctionName(nameof(GenericWebhookCallbackHttp))]
+        public async Task<HttpResponseMessage> GenericWebhookCallbackHttp([HttpTrigger(authLevel: AuthorizationLevel.Function, "GET", "POST", "PUT")]HttpRequestMessage request, ILogger logger)
         {
             HttpStatusCode status = HttpStatusCode.OK;
             if(request.Method == HttpMethod.Post || request.Method == HttpMethod.Put)
@@ -56,11 +57,19 @@ namespace SampleFunctionApplication
 
             try
             {
-                var container = this.BlobClient.GetContainerReference(this.RootConfig.WebHookTempContainer);
-                await container.CreateIfNotExistsAsync();
+                await this.BlobClient.CreateIfNotExistsAsync();
 
-                var blob = container.GetBlockBlobReference($"{DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfffff")}.txt");
-                await blob.UploadTextAsync(body);
+                using (var strm = new MemoryStream())
+                {
+                    using (var writer = new StreamWriter(strm, leaveOpen: true))
+                    {
+                        await writer.WriteAsync(body);
+                    }
+
+                    strm.Position = 0;
+                    await this.BlobClient.UploadBlobAsync($"{DateTime.UtcNow.ToString("yyyyMMdd-HHmmssfffff")}.txt", strm);
+                }
+
             }
             catch (Exception ex)
             {
